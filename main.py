@@ -182,19 +182,21 @@ def preemptive_sjf_scheduling(processes, total_runtime):
 
 
 def round_robin_scheduling(processes, total_runtime, quantum):
-    processes.sort(key=lambda p: p.arrival)
+    processes.sort(key=lambda p: p.arrival)  # Sort by arrival time
     queue = deque()
     current_time = 0
     event_log = []
-    remaining_processes = processes[:]
+    remaining_processes = processes[:]  # Copy list to track unqueued processes
 
     event_log.append(f"{len(processes)} processes")
     event_log.append("Using Round Robin")
-    event_log.append(f"Quantum {quantum}")
+    event_log.append(f"Quantum {quantum}\n")  # <-- Added newline here
 
     while current_time < total_runtime:
+        # Add newly arrived processes to the queue
         for process in remaining_processes[:]:
-            if process.arrival <= current_time:
+            if process.arrival == current_time:
+                event_log.append(f"Time {current_time:3d} : {process.name} arrived")
                 queue.append(process)
                 remaining_processes.remove(process)
 
@@ -202,28 +204,38 @@ def round_robin_scheduling(processes, total_runtime, quantum):
             process = queue.popleft()
             if process.response_time == -1:
                 process.response_time = current_time - process.arrival
+            
             time_slice = min(process.remaining, quantum)
-            event_log.append(
-                f"Time {current_time} : {process.name} selected (burst {process.remaining})"
-            )
+            event_log.append(f"Time {current_time:3d} : {process.name} selected (burst {process.remaining})")
+
             process.remaining -= time_slice
             current_time += time_slice
+
+            # Check for new arrivals after processing
+            for p in remaining_processes[:]:
+                if p.arrival <= current_time:
+                    event_log.append(f"Time {p.arrival:3d} : {p.name} arrived")
+                    queue.append(p)
+                    remaining_processes.remove(p)
+
             if process.remaining > 0:
-                queue.append(process)
+                queue.append(process)  # Re-add to queue if still has burst time left
             else:
                 process.completion_time = current_time
-                event_log.append(
-                    f"Time {current_time} : {process.name} finished")
+                event_log.append(f"Time {current_time:3d} : {process.name} finished")
         else:
-            event_log.append(f"Time {current_time} : Idle")
+            # Log Idle time and move to the next time unit if no process is ready
+            event_log.append(f"Time {current_time:3d} : Idle")
             current_time += 1
 
-    event_log.append(f"Finished at time {total_runtime}")
+    event_log.append(f"Finished at time {total_runtime}\n")  # <-- Added newline here
 
     unfinished_processes = [p.name for p in processes if p.remaining > 0]
     if unfinished_processes:
-        event_log.append("Unfinished processes: " +
-                         " ".join(unfinished_processes))
+        event_log.append("Unfinished processes: " + " ".join(unfinished_processes))
+
+    # Sort processes numerically by name (P1, P2, etc.)
+    processes.sort(key=lambda p: int(p.name[1:]))  
 
     for process in processes:
         process.turnaround_time = process.completion_time - process.arrival
