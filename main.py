@@ -120,23 +120,33 @@ def preemptive_sjf_scheduling(processes, total_runtime):
     event_log.append("Using preemptive Shortest Job First")
 
     while current_time < total_runtime:
+        # Add new arrivals to the ready queue
         for process in remaining_processes[:]:
             if process.arrival == current_time:
-                event_log.append(
-                    f"Time {current_time} : {process.name} arrived")
+                event_log.append(f"Time {current_time} : {process.name} arrived")
                 ready_queue.append(process)
                 remaining_processes.remove(process)
 
-        if active_process and active_process.remaining == 0:
-            event_log.append(
-                f"Time {current_time} : {active_process.name} finished")
+        # Check if active process is finished
+        if active_process and active_process.remaining <= 0:
+            event_log.append(f"Time {current_time} : {active_process.name} finished")
             active_process.completion_time = current_time
             active_process = None
 
+        # If there is a process waiting with a shorter remaining time, preempt the active process
         if ready_queue:
             ready_queue.sort(key=lambda p: p.remaining)
-            if not active_process or active_process.remaining > ready_queue[
-                    0].remaining:
+            if active_process:
+                if active_process.remaining > ready_queue[0].remaining:
+                    # Preempt active process: re-queue it and select the new process
+                    ready_queue.append(active_process)
+                    active_process = ready_queue.pop(0)
+                    if active_process.response_time == -1:
+                        active_process.response_time = current_time - active_process.arrival
+                    event_log.append(
+                        f"Time {current_time} : {active_process.name} selected (burst {active_process.remaining})"
+                    )
+            else:
                 active_process = ready_queue.pop(0)
                 if active_process.response_time == -1:
                     active_process.response_time = current_time - active_process.arrival
@@ -144,6 +154,7 @@ def preemptive_sjf_scheduling(processes, total_runtime):
                     f"Time {current_time} : {active_process.name} selected (burst {active_process.remaining})"
                 )
 
+        # If there is an active process, run it for 1 time unit
         if active_process:
             active_process.remaining -= 1
         else:
@@ -155,10 +166,12 @@ def preemptive_sjf_scheduling(processes, total_runtime):
 
     unfinished_processes = [p.name for p in processes if p.remaining > 0]
     if unfinished_processes:
-        event_log.append("Unfinished processes: " +
-                         " ".join(unfinished_processes))
+        event_log.append("Unfinished processes: " + " ".join(unfinished_processes))
 
     for process in processes:
+        # If a process never finished, mark its completion time at total_runtime
+        if process.completion_time == -1:
+            process.completion_time = total_runtime
         process.turnaround_time = process.completion_time - process.arrival
         process.waiting_time = process.turnaround_time - process.burst
         event_log.append(
