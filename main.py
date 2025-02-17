@@ -1,4 +1,3 @@
-
 import sys
 from collections import deque
 import os
@@ -71,25 +70,40 @@ def fcfs_scheduling(processes, total_runtime):
     event_log = []
 
     event_log.append(f"{len(processes)} processes")
-    event_log.append("Using First In First Out (FIFO)")
+    event_log.append("Using First-Come First-Served")
 
     for process in processes:
-        if current_time < process.arrival:
-            while current_time < process.arrival:
-                event_log.append(f"Time {current_time} : Idle")
-                current_time += 1
-        event_log.append(
-            f"Time {current_time} : {process.name} selected (burst {process.burst})"
-        )
+        # Idle until the process arrives
+        while current_time < process.arrival:
+            event_log.append(f"Time {current_time:3d} : Idle")
+            current_time += 1
+
+        # Log process arrival
+        event_log.append(f"Time {current_time:3d} : {process.name} arrived")
+        # Log process selection with formatted burst
+        event_log.append(f"Time {current_time:3d} : {process.name} selected (burst {process.burst:3d})")
+
         process.start_time = current_time
-        process.completion_time = current_time + process.burst
-        process.response_time = process.start_time - process.arrival
+        process.response_time = current_time - process.arrival
+        current_time += process.burst
+        process.completion_time = current_time
         process.turnaround_time = process.completion_time - process.arrival
         process.waiting_time = process.turnaround_time - process.burst
-        current_time += process.burst
-        event_log.append(f"Time {current_time} : {process.name} finished")
 
-    event_log.append(f"Finished at time {total_runtime}")
+        event_log.append(f"Time {current_time:3d} : {process.name} finished")
+
+    # Log any remaining idle time until total_runtime
+    while current_time < total_runtime:
+        event_log.append(f"Time {current_time:3d} : Idle")
+        current_time += 1
+
+    event_log.append(f"Finished at time {total_runtime:3d}")
+
+    # Log process summary info
+    for process in processes:
+        event_log.append(
+            f"{process.name} wait {process.waiting_time:3d} turnaround {process.turnaround_time:3d} response {process.response_time:3d}"
+        )
 
     return event_log
 
