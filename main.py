@@ -41,10 +41,17 @@ def parse_input(file_path):
         elif parts[0] == "quantum":
             quantum = int(parts[1])
         elif parts[0] == "process":
-            name = parts[2]
-            arrival = int(parts[4])
-            burst = int(parts[6])
-            processes.append(Process(name, arrival, burst))
+            if len(parts) != 7 or parts[1] != "name" or parts[3] != "arrival" or parts[5] != "burst":
+                print(f"Error: Malformed process line -> {' '.join(parts)}")
+                sys.exit(1)
+            try:
+                name = parts[2]
+                arrival = int(parts[4])
+                burst = int(parts[6])
+                processes.append(Process(name, arrival, burst))
+            except ValueError:
+                print(f"Error: Non-integer arrival or burst time in line -> {' '.join(parts)}")
+                sys.exit(1)
         elif parts[0] == "end":
             break
 
