@@ -65,7 +65,7 @@ def parse_input(file_path):
 
 
 def fcfs_scheduling(processes, total_runtime):
-    processes.sort(key=lambda p: p.arrival)
+    processes.sort(key=lambda p: p.arrival)  # Sort by arrival time
     current_time = 0
     event_log = []
 
@@ -97,9 +97,12 @@ def fcfs_scheduling(processes, total_runtime):
         event_log.append(f"Time {current_time:3d} : Idle")
         current_time += 1
 
-    event_log.append(f"Finished at time {total_runtime:3d}")
+    event_log.append(f"Finished at time {total_runtime}\n")  # <-- Added newline here
 
-    # Log process summary info
+    # Sort processes numerically by name (P1, P2, etc.)
+    processes.sort(key=lambda p: int(p.name[1:]))
+
+    # Log process summary info in numerical order
     for process in processes:
         event_log.append(
             f"{process.name} wait {process.waiting_time:3d} turnaround {process.turnaround_time:3d} response {process.response_time:3d}"
