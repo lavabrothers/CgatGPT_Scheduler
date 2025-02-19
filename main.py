@@ -72,7 +72,7 @@ def parse_input(file_path):
 
 
 def fcfs_scheduling(processes, total_runtime):
-    processes.sort(key=lambda p: p.arrival)  # Sort by arrival time
+    processes.sort(key=lambda p: (p.arrival, p.burst))  # Sort by arrival time
     current_time = 0
     event_log = []
 
